@@ -4,7 +4,6 @@ ruleset hello_world {
         description <<
             A first rule for the Quickstart
         >>
-        author "Phil Windley"
         logging on
         shares hello
     }
