@@ -22,4 +22,14 @@ ruleset hello_world {
             "something": "Hello World"
         })
     }
+
+    rule hello_monkey {
+        select when echo monkey
+        pre {
+            name = event:attr("name").defaultsTo("Monkey").klog("Name Used: ")
+        }
+        send_directive("say", {
+            "something": "Hello " + name
+        })
+    }
 }
