@@ -11,7 +11,7 @@ ruleset com.jacobeasley.sms {
     global {
         __testing = {
             "queries": [
-                { "name": "send_sms" }
+                { "name": "messages" }
             ],
             "events": [
                 {
@@ -20,6 +20,10 @@ ruleset com.jacobeasley.sms {
                     "attrs": ["to", "from", "message"]
                 }
             ]
+        }
+
+        messages = function() {
+            twilio:query_messages()
         }
     }
 
