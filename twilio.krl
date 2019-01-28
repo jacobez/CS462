@@ -10,7 +10,7 @@ ruleset com.jacobeasley.twilio {
         base_url = <<https://#{account_sid}:#{auth_token}@api.twilio.com/2010-04-01/Accounts/#{account_sid}/>>
         
         query_messages = function() {
-            http:get(base_url + "Messages.json"){"content"}
+            http:get(base_url + "Messages.json", parseJSON = true){"content"}
         }
 
         send_sms = defaction(to, from, message) {
