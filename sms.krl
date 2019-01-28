@@ -5,7 +5,7 @@ ruleset com.jacobeasley.sms {
             with account_sid = keys:twilio{"account_sid"}
                  auth_token = keys:twilio{"auth_token"}
         
-        shares __testing
+        shares __testing, messages
     }
 
     global {
