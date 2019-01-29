@@ -11,7 +11,7 @@ ruleset com.jacobeasley.sms {
     global {
         __testing = {
             "queries": [
-                { "name": "messages" }
+                { "name": "messages", "args": ["paginate", "next_page_uri", "sender", "recipient"] }
             ],
             "events": [
                 {
@@ -22,8 +22,8 @@ ruleset com.jacobeasley.sms {
             ]
         }
 
-        messages = function() {
-            twilio:query_messages()
+        messages = function(paginate = false, next_page_uri = null, sender = "", recipient = "") {
+            twilio:query_messages(paginate, next_page_uri, sender, recipient)
         }
     }
 
