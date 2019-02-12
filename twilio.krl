@@ -3,10 +3,12 @@ ruleset com.jacobeasley.twilio {
         configure using account_sid = ""
                         auth_token = ""
         
-        provides query_messages, send_sms
+        provides query_messages, send_sms, default_from_number
     }
 
     global {
+        default_from_number = "+17075040839"
+
         base_url = <<https://#{account_sid}:#{auth_token}@api.twilio.com/2010-04-01/Accounts/#{account_sid}/>>
 
         build_filter = function(sender, recipient) {
