@@ -1,5 +1,6 @@
 ruleset sensor_profile {
     meta {
+        provides profile
         shares profile
     }
 
