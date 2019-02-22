@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Lab 5</title>
+        <style>
+            .reading-temperature {
+                font-weight: bold;
+            }
+            .violation {
+                color: red;
+            }
+            .alert {
+                color: green;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div v-if="page === 'profile'">
+                <ul>
+                    <li v-for="alert in alerts" class="alert">{{ alert }}</li>
+                </ul>
+                <div>
+                    <label for="name">Name:</label>
+                    <input name="name" type="text" v-model="profile.name">
+                </div>
+                <div>
+                    <label for="location">Location:</label>
+                    <input name="location" type="text" v-model="profile.location">
+                </div>
+                <div>
+                    <label for="phone">Phone:</label>
+                    <input name="phone" type="text" v-model="profile.phone">
+                </div>
+                <div>
+                    <label for="threshold">Threshold:</label>
+                    <input name="threshold" type="number" v-model.number="profile.threshold">
+                </div>
+                <button v-on:click="updateProfile" v-bind:disabled="updating">Save Profile</button>
+                <p>
+                    <button v-on:click="navigate('readings')">Go To Readings</button>
+                </p>
+            </div>
+            <div v-else>
+                    <p><strong>Current Temperature:</strong> {{ readings[0].temperature }}</p>
+                    <ul>
+                        <li v-for="reading in readings" v-bind:class="{ violation: reading.violation }">
+                            <span class="reading-temperature">{{ reading.temperature }}</span>
+                            <span class="reading-timestamp">{{ reading.timestamp }}</span>
+                        </li>
+                    </ul>
+                    <button v-on:click="navigate('profile')">Edit Profile</button>
+            </div>
+        </div>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+        <script>
+            var eci = "B3Ef9TMSKuMoEQi3RrpzuR";
+
+            var query = function (ruleset, endpoint) {
+                return axios.get(`http://localhost:8080/sky/cloud/${eci}/${ruleset}/${endpoint}`);
+            };
+
+            axios.all([
+                query("sensor_profile", "profile"),
+                query("temperature_store", "temperatures")
+            ]).then(axios.spread(function (profile, temperatures) {
+                new Vue({
+                    el: "#app",
+                    data: {
+                        profile: profile.data,
+                        readings: temperatures.data.sort(function (a, b) {
+                            return a.timestamp > b.timestamp ? -1 : (a.timestamp < b.timestamp ? 1 : 0);
+                        }).map(function (reading) {
+                            return Object.assign(reading, {
+                                violation: reading.temperature > profile.data.threshold
+                            });
+                        }),
+                        page: "readings",
+                        updating: false,
+                        alerts: []
+                    },
+                    methods: {
+                        navigate: function (page) {
+                            this.page = page;
+                        },
+                        updateProfile: function () {
+                            this.updating = true;
+                            this.alerts = [];
+
+                            axios.post(`http://localhost:8080/sky/event/${eci}/2/sensor/profile_updated`, this.profile).then(response => {
+                                this.readings = this.readings.map(reading => {
+                                    return Object.assign(reading, {
+                                        violation: reading.temperature > this.profile.threshold
+                                    });
+                                });
+                                this.updating = false;
+                                this.alerts = ["Profile updated."];
+                            }).catch(function (error) {
+                                console.log(error);
+                            });
+                        }
+                    }
+                });
+            }));
+        </script>
+    </body>
+</html>
