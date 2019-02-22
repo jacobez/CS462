@@ -15,7 +15,7 @@ ruleset wovyn_base {
         select when wovyn heartbeat where event:attr("genericThing")
 
         pre {
-            temperature = event:attr("genericThing"){"data"}{"temperature"}[0]
+            temperature = event:attr("genericThing"){"data"}{"temperature"}[0]{"temperatureF"}
         }
 
         send_directive("temperature_heartbeat", {
@@ -35,7 +35,8 @@ ruleset wovyn_base {
         select when wovyn new_temperature_reading
 
         pre {
-            temperature = event:attr("temperature"){"temperatureF"}
+            temperature = event:attr("temperature")
+            timestamp = event:attr("timestamp")
             violation = temperature > temperature_threshold
         }
 
@@ -45,7 +46,8 @@ ruleset wovyn_base {
 
         always {
             raise wovyn event "threshold_violation" attributes {
-                "temperature": temperature
+                "temperature": temperature,
+                "timestamp": timestamp
             } if violation;
         }
     }
