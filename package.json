@@ -1,0 +1,25 @@
+{
+  "name": "cs462",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "jest": "^24.1.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacobez/CS462.git"
+  },
+  "author": "Jacob Easley",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jacobez/CS462/issues"
+  },
+  "homepage": "https://github.com/jacobez/CS462#readme"
+}
