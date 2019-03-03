@@ -4,11 +4,7 @@ ruleset wovyn_base {
         use module com.jacobeasley.twilio alias twilio
             with account_sid = keys:twilio{"account_sid"}
                  auth_token = keys:twilio{"auth_token"}
-    }
-
-    global {
-        temperature_threshold = 60
-        notification_phone = "+17072926097"
+        use module sensor_profile
     }
 
     rule process_heartbeat {
@@ -37,7 +33,7 @@ ruleset wovyn_base {
         pre {
             temperature = event:attr("temperature")
             timestamp = event:attr("timestamp")
-            violation = temperature > temperature_threshold
+            violation = temperature > sensor_profile:profile(){"threshold"}
         }
 
         send_directive("temperature_violation", {
@@ -59,6 +55,6 @@ ruleset wovyn_base {
             temperature = event:attr("temperature")
         }
 
-        twilio:send_sms(notification_phone, twilio:default_from_number, "Temperature Violation: " + temperature)
+        twilio:send_sms(sensor_profile:profile(){"phone"}, twilio:default_from_number, "Temperature Violation: " + temperature)
     }
 }
