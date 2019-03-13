@@ -1,6 +1,8 @@
 ruleset manage_sensors {
     meta {
-        shares __testing, sensors
+        use module io.picolabs.wrangler alias Wrangler
+
+        shares __testing, sensors, temperatures
     }
 
     global {
@@ -30,6 +32,12 @@ ruleset manage_sensors {
 
         sensors = function() {
             ent:sensors.defaultsTo({})
+        }
+
+        temperatures = function() {
+            sensors().map(function(v, k) {
+                Wrangler:skyQuery(v, "temperature_store", "temperatures", {})
+            })
         }
 
         picoName = function(sensor_name) {
