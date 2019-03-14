@@ -5,6 +5,15 @@ ruleset wovyn_base {
             with account_sid = keys:twilio{"account_sid"}
                  auth_token = keys:twilio{"auth_token"}
         use module sensor_profile
+        use module io.picolabs.subscription alias Subscription
+    }
+
+    global {
+        manager_subscription = function() {
+            Subscription:established().filter(function(subscription) {
+                subscription{"Tx_role"} == "sensor_collection"
+            }).head()
+        }
     }
 
     rule process_heartbeat {
@@ -34,11 +43,18 @@ ruleset wovyn_base {
             temperature = event:attr("temperature")
             timestamp = event:attr("timestamp")
             violation = temperature > sensor_profile:profile(){"threshold"}
+            manager = manager_subscription()
         }
 
-        send_directive("temperature_violation", {
-            "violation": violation
-        })
+        if violation && manager then
+            event:send({
+                "eci": manager{"Tx"},
+                "domain": "sensor",
+                "type": "threshold_violation",
+                "attrs": {
+                    "temperature": temperature
+                }
+            }, manager{"Tx_host"}.defaultsTo(meta:host))
 
         always {
             raise wovyn event "threshold_violation" attributes {
@@ -46,15 +62,5 @@ ruleset wovyn_base {
                 "timestamp": timestamp
             } if violation;
         }
-    }
-
-    rule threshold_notification {
-        select when wovyn threshold_violation
-
-        pre {
-            temperature = event:attr("temperature")
-        }
-
-        twilio:send_sms(sensor_profile:profile(){"phone"}, twilio:default_from_number, "Temperature Violation: " + temperature)
     }
 }
