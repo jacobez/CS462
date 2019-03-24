@@ -60,6 +60,29 @@ ruleset temperature_store {
         }
     }
 
+    rule send_report {
+        select when sensor report_requested
+
+        pre {
+            rx = event:attr("rx")
+            tx = event:attr("tx")
+            cid = event:attr("cid")
+            temperatures = temperatures()
+        }
+
+        event:send({
+            "eci": rx,
+            "eid": cid,
+            "domain": "sensor",
+            "type": "report_received",
+            "attrs": {
+                "temperatures": temperatures,
+                "cid": cid,
+                "tx": tx
+            }
+        })
+    }
+
     rule clear_temperatures {
         select when sensor reading_reset
 
