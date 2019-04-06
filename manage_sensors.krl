@@ -8,7 +8,7 @@ ruleset manage_sensors {
                 auth_token = keys:twilio{"auth_token"}
         use module sensor_profile
 
-        shares __testing, sensors, temperatures
+        shares __testing, sensors, temperatures, recent_reports
     }
 
     global {
@@ -48,6 +48,20 @@ ruleset manage_sensors {
                 sensor_name = ent:sensor_names.get([id]);
                 a.put([sensor_name], b)
             }, {})
+        }
+
+        reports = function() {
+            ent:reports.defaultsTo({})
+        }
+
+        recent_reports = function() {
+            num_reports = reports().keys().length();
+            start = num_reports <= 5 => 0 | num_reports - 5;
+            end = num_reports - 1;
+
+            reports().values().filter(function(report) {
+                report{"completed"}
+            }).slice(start, end)
         }
 
         temperatures = function() {
@@ -172,6 +186,92 @@ ruleset manage_sensors {
         fired {
             ent:sensor_names := sensor_names();
             ent:sensor_names{[subscription_id]} := sensor_name
+        }
+    }
+
+    rule start_report {
+        select when report requested
+
+        pre {
+            cid  = ent:cid.defaultsTo(0)
+            sensors = sensors()
+        }
+
+        if sensors.keys().length() > 0 then
+            send_directive("report_started", {
+                "cid": cid
+            })
+
+        fired {
+            ent:reports := reports();
+            ent:reports{[cid]} := {
+                "completed": false,
+                "sensors": sensors.keys().length(),
+                "responses": 0,
+                "readings": []
+            };
+            ent:cid := cid + 1;
+
+            raise report event "started" attributes {
+                "cid": cid,
+                "sensors": sensors
+            }
+        }
+    }
+
+    rule request_report {
+        select when report started
+            foreach event:attr("sensors") setting (sensor, sid)
+                event:send({
+                    "eci": sensor{"Tx"},
+                    "eid": event:attr("cid"),
+                    "domain": "sensor",
+                    "type": "report_requested",
+                    "attrs": {
+                        "cid": event:attr("cid"),
+                        "rx": sensor{"Rx"},
+                        "tx": sensor{"Tx"}
+                    }
+                })
+    }
+
+    rule handle_sensor_report {
+        select when sensor report_received
+
+        pre {
+            cid = event:attr("cid")
+            temperatures = event:attr("temperatures")
+            tx = event:attr("tx")
+            report = reports(){[cid]}
+            readings = report{"readings"}
+            responses = report{"responses"}
+        }
+
+        always {
+            ent:reports{[cid]} := report.put(["readings"], readings.append(temperatures.map(function(temperature) {
+                temperature.put(["sensor"], tx)
+            }))).put(["responses"], responses + 1);
+
+            raise report event "sensor_report_stored" attributes {
+                "cid": cid
+            }
+        }
+    }
+
+    rule check_complete_report {
+        select when report sensor_report_stored
+
+        pre {
+            cid = event:attr("cid")
+            report = ent:reports{[cid]}
+            responses = report{"responses"}
+        }
+
+        if responses == report{"sensors"} then
+            noop()
+
+        fired {
+            ent:reports{[cid]} := report.put(["completed"], true)
         }
     }
 
