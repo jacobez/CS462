@@ -57,7 +57,7 @@ ruleset manage_sensors {
         recent_reports = function() {
             num_reports = reports().keys().length();
             start = num_reports <= 5 => 0 | num_reports - 5;
-            end = num_reports - 1;
+            end = num_reports - 1;  
 
             reports().values().filter(function(report) {
                 report{"completed"}

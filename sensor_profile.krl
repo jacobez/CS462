@@ -10,7 +10,7 @@ ruleset sensor_profile {
                 "name": ent:name.defaultsTo("Wovyn 1"),
                 "location": ent:location.defaultsTo("Jacob Easley's Home"),
                 "phone": ent:phone.defaultsTo("+17072926097"),
-                "threshold": ent:threshold.defaultsTo(60)
+                "threshold": ent:threshold.defaultsTo(72)
             }
         }
     }
